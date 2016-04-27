@@ -7,6 +7,28 @@
     },
     "builders": [
         {
+            "type": "qemu",
+            "format": "qcow2",
+            "accelerator": "kvm",
+            "iso_url": "{{ user `iso_url` }}",
+            "iso_checksum": "{{ user `iso_checksum` }}",
+            "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+            "http_directory": "srv",
+            "boot_wait": "5s",
+            "boot_command": [
+                "<enter><wait10><wait10>",
+                "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/install-base.sh<enter><wait5>",
+                "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/poweroff.timer<enter><wait5>",
+                "export PRIMARY_DISK=vda<enter>",
+                "/usr/bin/bash ./install-base.sh<enter>"
+            ],
+            "disk_size": 20480,
+            "ssh_username": "vagrant",
+            "ssh_password": "vagrant",
+            "ssh_timeout": "{{ user `ssh_timeout` }}",
+            "shutdown_command": "sudo systemctl start poweroff.timer"
+        },
+        {
             "type": "parallels-iso",
             "parallels_tools_flavor": "lin",
             "parallels_tools_mode": "attach",
@@ -20,6 +42,7 @@
                 "<enter><wait10><wait10>",
                 "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/install-base.sh<enter><wait5>",
                 "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/poweroff.timer<enter><wait5>",
+                "export PRIMARY_DISK=sda<enter>",
                 "/usr/bin/bash ./install-base.sh<enter>"
             ],
             "disk_size": 20480,
@@ -41,6 +64,7 @@
                 "<enter><wait10><wait10>",
                 "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/install-base.sh<enter><wait5>",
                 "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/poweroff.timer<enter><wait5>",
+                "export PRIMARY_DISK=sda<enter>",
                 "/usr/bin/bash ./install-base.sh<enter>"
             ],
             "disk_size": 20480,
@@ -62,6 +86,7 @@
                 "<enter><wait10><wait10>",
                 "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/install-base.sh<enter><wait5>",
                 "/usr/bin/curl -O http://{{ .HTTPIP }}:{{ .HTTPPort }}/poweroff.timer<enter><wait5>",
+                "export PRIMARY_DISK=sda<enter>",
                 "/usr/bin/bash ./install-base.sh<enter>"
             ],
             "disk_size": 20480,
@@ -72,6 +97,12 @@
         }
     ],
     "provisioners": [
+        {
+            "only": ["qemu"],
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'",
+            "script": "scripts/install-qemu.sh"
+        },
         {
             "only": ["parallels-iso"],
             "type": "shell",
